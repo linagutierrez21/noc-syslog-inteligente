@@ -35,3 +35,18 @@ noc-syslog-inteligente/
 │       └── index.html    # Interfaz visual del dashboard y formularios
 ├── requirements.txt      # Librerías necesarias para correr el proyecto
 └── README.md             # Documentación del repositorio
+
+## 📊 ¿Cómo funciona la severidad Syslog (0-7)?
+
+En el proyecto implementé el estándar internacional de severidades de Syslog, las cuales van desde el nivel 0 (el más crítico) hasta el 7 (depuración):
+
+* **Nivel 0 (Emergency):** El sistema está unusable.
+* **Nivel 1 (Alert):** Se requiere acción inmediata de los ingenieros.
+* **Nivel 2 (Critical):** Condiciones críticas del sistema (ej. fallo de hardware).
+* **Nivel 3 (Error):** Errores operativos comunes.
+* **Nivel 4 (Warning):** Advertencias o avisos previos a una falla.
+* **Nivel 5 (Notice):** Condiciones normales pero significativas.
+* **Nivel 6 (Informational):** Mensajes informativos rutinarios.
+* **Nivel 7 (Debug):** Mensajes de depuración para desarrollo y rastreo de red.
+
+*(Nota: En mi aplicación, los niveles 0, 1 y 2 generan automáticamente un incidente crítico en el dashboard del NOC).*

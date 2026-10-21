@@ -91,6 +91,71 @@
             </div>
         </div>
 
+        <!-- Gestión de Incidentes Críticos Activos (Ciclo de Vida) -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-danger text-white py-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Gestión de Incidentes Críticos Activos (Ciclo de Vida NOC)
+            </div>
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID / Alerta</th>
+                                <th>Descripción Syslog</th>
+                                <th>Severidad</th>
+                                <th>Estado Actual</th>
+                                <th>Notas de Diagnóstico / Solución</th>
+                                <th style="width: 250px;">Acción y Gestión</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inc in incidents %}
+                            <tr>
+                                <td class="fw-bold">#{{ inc.id }}<br><small class="text-muted">{{ inc.title }}</small></td>
+                                <td><small>{{ inc.description }}</small></td>
+                                <td><span class="badge bg-danger">Nivel {{ inc.severity }}</span></td>
+                                <td>
+                                    {% if inc.status == 'Registrado' or inc.status == 'Abierto' %}
+                                        <span class="badge bg-secondary">Registrado</span>
+                                    {% elif inc.status == 'En Proceso' %}
+                                        <span class="badge bg-warning text-dark">En Proceso</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Resuelto</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="/incidents/update/{{ inc.id }}" method="POST" class="row g-2">
+                                        <div class="col-12">
+                                            <select name="status" class="form-select form-select-sm mb-1" required>
+                                                <option value="Registrado" {% if inc.status == 'Registrado' or inc.status == 'Abierto' %}selected{% endif %}>Registrado</option>
+                                                <option value="En Proceso" {% if inc.status == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+                                                <option value="Resuelto" {% if inc.status == 'Resuelto' %}selected{% endif %}>Resuelto</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Documenta aquí la causa raíz, solución o motivo del fallo del puerto...">{{ inc.notes }}</textarea>
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-sm btn-dark w-100"><i class="bi bi-floppy me-1"></i> Guardar y Actualizar</button>
+                                        </div>
+                                    </form>
+                                </td>
+                                <td class="text-center">
+                                    <small class="text-muted">Creado:<br>{{ inc.created_at }}</small>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">No hay incidentes críticos activos. ¡La red opera con normalidad!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Inventario Editable de Dispositivos -->
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
@@ -216,7 +281,7 @@
     <!-- Footer Institucional -->
     <footer class="bg-dark text-white-50 text-center py-3 mt-5">
         <div class="container">
-            <small>NOC Syslog Inteligente &bull; Proyecto Académico &bull; Universidad / Asignatura de Redes</small>
+            <small>NOC Syslog Inteligente &bull; Proyecto Académico &bull; Administración y Gestión de Redes</small>
         </div>
     </footer>
 

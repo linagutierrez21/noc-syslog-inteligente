@@ -17,7 +17,8 @@ def dashboard(request: Request):
     conn = get_db_connection()
     devices = conn.execute("SELECT * FROM devices").fetchall()
     events = conn.execute("SELECT * FROM syslog_events ORDER BY id DESC LIMIT 10").fetchall()
-    incidents = conn.execute("SELECT * FROM incidents").fetchall()
+    # Traemos solo los incidentes que NO estén resueltos para mantener dinámico el dashboard
+    incidents = conn.execute("SELECT * FROM incidents WHERE status != 'Resuelto'").fetchall()
     conn.close()
     
     return templates.TemplateResponse(
@@ -45,9 +46,37 @@ def add_device(name: str = Form(...), ip: str = Form(...), brand: str = Form(...
 @app.post("/syslog/simulate")
 def simulate_syslog(device_ip: str = Form(...), facility: int = Form(...), severity: int = Form(...), message: str = Form(...)):
     conn = get_db_connection()
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
     conn.execute(
         "INSERT INTO syslog_events (timestamp, device_ip, facility, severity, message, simulated) VALUES (?, ?, ?, ?, ?, 1)",
-        (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), device_ip, facility, severity, message)
+        (timestamp, device_ip, facility, severity, message)
+    )
+    
+    # Si la severidad es crítica (0, 1 o 2), crea un incidente con estado inicial "Registrado"
+    if severity in [0, 1, 2]:
+        conn.execute(
+            "INSERT INTO incidents (title, description, severity, status, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                f"Alerta Crítica en IP {device_ip}",
+                message,
+                severity,
+                "Registrado",
+                "Sin documentación inicial.",
+                timestamp
+            )
+        )
+        
+    conn.commit()
+    conn.close()
+    return RedirectResponse(url="/", status_code=303)
+
+@app.post("/incidents/update/{incident_id}")
+def update_incident(incident_id: int, status: str = Form(...), notes: str = Form(...)):
+    conn = get_db_connection()
+    conn.execute(
+        "UPDATE incidents SET status = ?, notes = ? WHERE id = ?",
+        (status, notes, incident_id)
     )
     conn.commit()
     conn.close()
@@ -73,7 +102,7 @@ def run_console_command(request: Request, command: str = Form(...)):
     conn = get_db_connection()
     devices = conn.execute("SELECT * FROM devices").fetchall()
     events = conn.execute("SELECT * FROM syslog_events ORDER BY id DESC LIMIT 10").fetchall()
-    incidents = conn.execute("SELECT * FROM incidents").fetchall()
+    incidents = conn.execute("SELECT * FROM incidents WHERE status != 'Resuelto'").fetchall()
     conn.close()
 
     return templates.TemplateResponse(
