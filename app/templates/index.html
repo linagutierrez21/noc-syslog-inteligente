@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOC Syslog Inteligente - v0.2.0 (MVP)</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .card-header {
+            font-weight: 600;
+            border-top-left-radius: 10px !important;
+            border-top-right-radius: 10px !important;
+        }
+        .console-box {
+            background-color: #1e1e1e;
+            color: #00ff66;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barra de Navegación Superior -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="#"><i class="bi bi-shield-lock-fill text-warning me-2"></i>NOC Syslog Inteligente <span class="badge bg-info text-dark ms-2">v0.2.0 MVP</span></a>
+            <span class="navbar-text text-light small">
+                <i class="bi bi-cpu me-1"></i> Administración y Gestión de Redes
+            </span>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <div class="container py-4">
+
+        <!-- Dashboard / Métricas Principales -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white p-3 border-start border-4 border-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Dispositivos en Red</h6>
+                            <h2 class="fw-bold mb-0">{{ devices | length }}</h2>
+                        </div>
+                        <i class="bi bi-router display-5 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark p-3 border-start border-4 border-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Eventos Syslog</h6>
+                            <h2 class="fw-bold mb-0">{{ events | length }}</h2>
+                        </div>
+                        <i class="bi bi-journal-text display-5 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white p-3 border-start border-4 border-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Incidentes Críticos</h6>
+                            <h2 class="fw-bold mb-0">{{ incidents | length }}</h2>
+                        </div>
+                        <i class="bi bi-exclamation-triangle-fill display-5 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventario Editable de Dispositivos -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                <span><i class="bi bi-hdd-rack me-2"></i>Inventario Editable de Dispositivos</span>
+                <span class="badge bg-secondary">Corte 2</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>IP</th>
+                                <th>Marca</th>
+                                <th>Modelo</th>
+                                <th>Versión</th>
+                                <th>Ubicación</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dev in devices %}
+                            <tr>
+                                <td class="fw-semibold">{{ dev.name }}</td>
+                                <td><code>{{ dev.ip }}</code></td>
+                                <td>{{ dev.brand }}</td>
+                                <td>{{ dev.model }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ dev.version }}</span></td>
+                                <td>{{ dev.location }}</td>
+                                <td><span class="badge bg-success bg-opacity-75"><i class="bi bi-check-circle me-1"></i>{{ dev.status }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">No hay dispositivos registrados en el inventario.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr class="text-muted">
+                
+                <h6 class="fw-bold mb-3 text-secondary"><i class="bi bi-plus-circle me-1"></i>Registrar Nuevo Dispositivo</h6>
+                <form action="/devices/add" method="POST" class="row g-3">
+                    <div class="col-md-2"><input type="text" name="name" class="form-control" placeholder="Nombre (ej: SW-Core)" required></div>
+                    <div class="col-md-2"><input type="text" name="ip" class="form-control" placeholder="Dirección IP" required></div>
+                    <div class="col-md-2"><input type="text" name="brand" class="form-control" placeholder="Marca (Cisco/Fortinet)" required></div>
+                    <div class="col-md-2"><input type="text" name="model" class="form-control" placeholder="Modelo" required></div>
+                    <div class="col-md-1"><input type="text" name="version" class="form-control" placeholder="Versión" required></div>
+                    <div class="col-md-2"><input type="text" name="location" class="form-control" placeholder="Ubicación" required></div>
+                    <div class="col-md-1"><input type="text" name="status" class="form-control" value="Online" required></div>
+                    <div class="col-12"><button type="submit" class="btn btn-dark px-4"><i class="bi bi-save me-1"></i> Guardar Dispositivo</button></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recepción y Simulador Syslog -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-secondary text-white py-3">
+                <i class="bi bi-broadcast me-2"></i>Simulador y Recepción de Mensajes Syslog (Severidad 0 a 7)
+            </div>
+            <div class="card-body p-4">
+                <form action="/syslog/simulate" method="POST" class="row g-3 mb-4">
+                    <div class="col-md-3"><input type="text" name="device_ip" class="form-control" placeholder="IP del Dispositivo" required></div>
+                    <div class="col-md-2"><input type="number" name="facility" class="form-control" placeholder="Facility (0-23)" required></div>
+                    <div class="col-md-2"><input type="number" name="severity" class="form-control" placeholder="Severidad (0-7)" min="0" max="7" required></div>
+                    <div class="col-md-3"><input type="text" name="message" class="form-control" placeholder="Mensaje de Alerta Syslog" required></div>
+                    <div class="col-md-2"><button type="submit" class="btn btn-warning text-dark fw-semibold w-100"><i class="bi bi-send me-1"></i> Simular</button></div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha / Hora</th>
+                                <th>IP Origen</th>
+                                <th>Facility</th>
+                                <th>Severidad</th>
+                                <th>Mensaje Syslog</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ev in events %}
+                            <tr>
+                                <td class="small text-muted">{{ ev.timestamp }}</td>
+                                <td><code>{{ ev.device_ip }}</code></td>
+                                <td class="text-center">{{ ev.facility }}</td>
+                                <td class="text-center"><span class="badge bg-dark">Nivel {{ ev.severity }}</span></td>
+                                <td>{{ ev.message }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">No hay eventos syslog registrados.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consola Simulada -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-dark text-white py-3">
+                <i class="bi bi-terminal-fill text-success me-2"></i>Consola de Red Simulada (Control de Acceso y Bloqueo de IA)
+            </div>
+            <div class="card-body console-box p-4">
+                <form action="/console/run" method="POST" class="input-group mb-3">
+                    <input type="text" name="command" class="form-control bg-dark text-light border-secondary font-monospace" placeholder="Prueba con: show version, show ip route o configure terminal..." required>
+                    <button class="btn btn-outline-success px-4" type="submit"><i class="bi bi-play-fill"></i> Ejecutar</button>
+                </form>
+                {% if console_result %}
+                <div class="p-3 border rounded {% if console_status == 'BLOQUEADO' %}border-danger bg-danger bg-opacity-25 text-danger-emphasis{% else %}border-success bg-success bg-opacity-25 text-success-emphasis{% endif %}">
+                    <strong><i class="bi bi-shield-exclamation me-1"></i> Estado: {{ console_status }}</strong><br>
+                    <span class="font-monospace text-light">{{ console_result }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer Institucional -->
+    <footer class="bg-dark text-white-50 text-center py-3 mt-5">
+        <div class="container">
+            <small>NOC Syslog Inteligente &bull; Proyecto Académico &bull; Universidad / Asignatura de Redes</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
