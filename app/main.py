@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -14,38 +16,51 @@ templates = Jinja2Templates(directory="app/templates")
 def startup_event():
     init_db()
 
+def obtener_eventos(conn, severity: Optional[str] = None):
+    """Devuelve los últimos eventos Syslog. Si llega una severidad válida (0 a 7), filtra por ese nivel."""
+    if severity and severity.isdigit() and 0 <= int(severity) <= 7:
+        return conn.execute(
+            "SELECT * FROM syslog_events WHERE severity = ? ORDER BY id DESC LIMIT 10",
+            (int(severity),)
+        ).fetchall()
+    return conn.execute("SELECT * FROM syslog_events ORDER BY id DESC LIMIT 10").fetchall()
+
 @app.get("/", response_class=HTMLResponse)
-def dashboard(request: Request):
+def dashboard(request: Request, severity: Optional[str] = None):
     conn = get_db_connection()
     devices = conn.execute("SELECT * FROM devices").fetchall()
-    events = conn.execute("SELECT * FROM syslog_events ORDER BY id DESC LIMIT 10").fetchall()
+
+    # Filtro por severidad: /?severity=1 muestra solo los eventos de nivel 1
+    events = obtener_eventos(conn, severity)
+
     # Traemos solo los incidentes que NO estén resueltos para mantener dinámico el dashboard
     incidents = conn.execute("SELECT * FROM incidents WHERE status != 'Resuelto'").fetchall()
-    
+
     # Traemos los últimos registros de auditoría SSH (Fase 2 - Corte 3)
     audit_logs = conn.execute("SELECT * FROM ssh_audit_logs ORDER BY id DESC LIMIT 10").fetchall()
-    
+
     conn.close()
-    
+
     return templates.TemplateResponse(
-        request, 
-        "index.html", 
+        request,
+        "index.html",
         {
             "devices": devices,
             "events": events,
             "incidents": incidents,
-            "audit_logs": audit_logs
+            "audit_logs": audit_logs,
+            "selected_severity": severity or ""
         }
     )
 
 @app.post("/devices/add")
 def add_device(
-    name: str = Form(...), 
-    ip: str = Form(...), 
-    brand: str = Form(...), 
-    model: str = Form(...), 
-    version: str = Form(...), 
-    location: str = Form(...), 
+    name: str = Form(...),
+    ip: str = Form(...),
+    brand: str = Form(...),
+    model: str = Form(...),
+    version: str = Form(...),
+    location: str = Form(...),
     status: str = Form(...)
 ):
     conn = get_db_connection()
@@ -59,19 +74,19 @@ def add_device(
 
 @app.post("/syslog/simulate")
 def simulate_syslog(
-    device_ip: str = Form(...), 
-    facility: int = Form(...), 
-    severity: int = Form(...), 
+    device_ip: str = Form(...),
+    facility: int = Form(...),
+    severity: int = Form(...),
     message: str = Form(...)
 ):
     conn = get_db_connection()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     conn.execute(
         "INSERT INTO syslog_events (timestamp, device_ip, facility, severity, message, simulated) VALUES (?, ?, ?, ?, ?, 1)",
         (timestamp, device_ip, facility, severity, message)
     )
-    
+
     # Si la severidad es crítica (0, 1 o 2), crea un incidente y dispara la alerta por correo (Gmail)
     if severity in [0, 1, 2]:
         conn.execute(
@@ -85,7 +100,7 @@ def simulate_syslog(
                 timestamp
             )
         )
-        
+
         # Envío de alerta crítica por correo electrónico (Gmail SMTP)
         asunto_correo = f"🚨 ALERTA NOC CRÍTICA: Severidad Nivel {severity}"
         cuerpo_correo = (
@@ -98,7 +113,7 @@ def simulate_syslog(
             f"Por favor ingrese al dashboard del NOC para gestionar y resolver el caso."
         )
         enviar_alerta_correo(asunto_correo, cuerpo_correo)
-        
+
     conn.commit()
     conn.close()
     return RedirectResponse(url="/", status_code=303)
@@ -118,10 +133,10 @@ def update_incident(incident_id: int, status: str = Form(...), notes: str = Form
 def run_console_command(request: Request, command: str = Form(...)):
     allowed_commands = ["show version", "show interfaces", "show ip route", "show log"]
     blocked_patterns = ["configure terminal", "write erase", "rm -rf", "shutdown", "delete"]
-    
+
     result = ""
     status_cmd = "PERMITIDO"
-    
+
     if any(blocked in command.lower() for blocked in blocked_patterns):
         status_cmd = "BLOQUEADO"
         result = f"ACCESO DENEGADO: El comando '{command}' está prohibido por la política de seguridad y defensa ante agentes IA."
@@ -130,22 +145,23 @@ def run_console_command(request: Request, command: str = Form(...)):
     else:
         status_cmd = "DESCONOCIDO"
         result = f"Comando no reconocido en la lista de solo lectura: '{command}'."
-        
+
     conn = get_db_connection()
     devices = conn.execute("SELECT * FROM devices").fetchall()
-    events = conn.execute("SELECT * FROM syslog_events ORDER BY id DESC LIMIT 10").fetchall()
+    events = obtener_eventos(conn)
     incidents = conn.execute("SELECT * FROM incidents WHERE status != 'Resuelto'").fetchall()
     audit_logs = conn.execute("SELECT * FROM ssh_audit_logs ORDER BY id DESC LIMIT 10").fetchall()
     conn.close()
 
     return templates.TemplateResponse(
-        request, 
-        "index.html", 
+        request,
+        "index.html",
         {
             "devices": devices,
             "events": events,
             "incidents": incidents,
             "audit_logs": audit_logs,
+            "selected_severity": "",
             "console_result": result,
             "console_status": status_cmd,
             "last_command": command
