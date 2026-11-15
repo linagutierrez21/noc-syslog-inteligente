@@ -1,7 +1,7 @@
 import sqlite3
 
 def get_db_connection():
-    conn = sqlite3.connect("noc_syslog_v2.db") # <-- Cambiamos el nombre aquí
+    conn = sqlite3.connect("noc_syslog_v2.db")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -46,6 +46,19 @@ def init_db():
             status TEXT DEFAULT 'Registrado',
             notes TEXT DEFAULT '',
             created_at TEXT NOT NULL
+        )
+    ''')
+
+    # Nueva Tabla de Auditoría SSH y Comandos (Fase 2 - Corte 3)
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS ssh_audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            host_ip TEXT NOT NULL,
+            command TEXT NOT NULL,
+            status TEXT NOT NULL,
+            output TEXT NOT NULL,
+            timestamp TEXT NOT NULL
         )
     ''')
     

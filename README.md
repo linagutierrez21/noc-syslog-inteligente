@@ -1,44 +1,31 @@
-# NOC Syslog Inteligente - Proyecto Corte 2
+# 🛡️ NOC Syslog Inteligente (v1.0.0)
 
-¡Hola! Este es el repositorio para mi proyecto de la materia **Administración y Gestión de Redes**. Aquí implementé un prototipo (MVP v0.2.0) de un Centro de Operaciones de Red (NOC) enfocado en la gestión de dispositivos, recepción de mensajes Syslog, automatización de incidentes críticos y una consola simulada.
-
----
-
-## 🚀 ¿Qué hace este proyecto?
-
-En este segundo corte desarrollé las siguientes funcionalidades:
-
-1. **Inventario de Dispositivos:** Permite registrar y listar equipos de red (Routers, Switches, Firewalls) con su nombre, dirección IP, marca, modelo, versión de firmware y ubicación.
-2. **Recepción y Simulador Syslog:** Un módulo donde se pueden enviar y almacenar eventos de red clasificados por su nivel de severidad (del 0 al 7, desde emergencia hasta depuración).
-3. **Gestión y Ciclo de Vida de Incidentes (Workflow NOC):** 
-   - Generación automática de incidentes críticos ante eventos Syslog de severidades **0, 1 y 2**.
-   - **Gestión de Estados:** Transición fluida del incidente a través de sus fases operativas reales:
-     - **Registrado:** Estado inicial al detectarse la alerta en la red.
-     - **En Proceso:** Estado asignado cuando un ingeniero de red toma el caso para análisis y diagnóstico.
-     - **Resuelto:** Estado final donde se documenta la solución aplicada, removiendo el incidente de la vista activa y normalizando las métricas del NOC.
-   - **Notas de Diagnóstico / Solución:** Campo interactivo para documentar la causa raíz, pruebas realizadas, comandos ejecutados o motivo del fallo de los puertos de red.
-4. **Consola de Comandos Simulada:** Una interfaz tipo terminal interactiva para ejecutar comandos de lectura (como `show version` o `show ip route`). Incluye una regla de seguridad que bloquea comandos peligrosos o destructivos (como `configure terminal` o `shutdown`).
-5. **Dashboard:** Una vista general con contadores en tiempo real de los dispositivos e incidentes registrados.
+Sistema integral de gestión de redes, ciberseguridad, monitoreo de eventos Syslog, alertas automatizadas vía SMTP (Gmail) y control de acceso SSH con bitácora de auditoría.
 
 ---
 
-## 🛠️ Tecnologías que utilicé
-
-* **Backend:** Python con FastAPI
-* **Servidor Web:** Uvicorn
-* **Base de Datos:** SQLite3 (base de datos local en archivo `noc_syslog_v2.db`)
-* **Frontend:** HTML, Jinja2 Templates y Bootstrap 5 (con Bootstrap Icons)
+## 🚀 Características Principales (Corte 3)
+* **Monitoreo y Simulación Syslog (RFC 5424):** Recepción y registro de eventos de red con clasificación por severidades (0 a 7).
+* **Alertas Críticas Automatizadas (SMTP Gmail):** Envío automático de correos electrónicos a administradores ante eventos críticos (Severidad 0, 1 y 2) utilizando autenticación segura por Contraseña de Aplicación.
+* **Inventario Editable de Dispositivos:** Gestión completa de equipos de red (routers, switches, firewalls) con atributos de marca, modelo, IP y estado en tiempo real.
+* **Gestor SSH Backend con Roles y Auditoría:** 
+  * Control de acceso diferenciado por roles (*Operador* de solo lectura vs. *Administrador* con permisos sensibles).
+  * Mecanismo de evaluación de comandos y bitácora de auditoría almacenada en base de datos SQLite (`ssh_audit_logs`).
+* **Ciberseguridad y Buenas Prácticas:** Protección de secretos y credenciales mediante variables de entorno (`.env`) excluidas estrictamente en `.gitignore`.
 
 ---
 
-## 📂 Estructura de carpetas
+## 🛠️ Tecnologías Utilizadas
+* **Backend:** Python 3.10+, FastAPI, Uvicorn.
+* **Base de Datos:** SQLite3 con consultas optimizadas y control de esquemas relacionales.
+* **Frontend:** Jinja2 Templates, Bootstrap 5, Bootstrap Icons.
+* **Alertas:** Protocolo SMTP seguro (`smtplib`, `email.message`, `python-dotenv`).
 
-```text
-noc-syslog-inteligente/
-├── app/
-│   ├── database.py        # Script de conexión e inicialización de las tablas en SQLite
-│   ├── main.py            # Código de FastAPI con los endpoints y la lógica de la aplicación
-│   └── templates/
-│       └── index.html     # Interfaz visual del dashboard, incidentes y formularios
-├── requirements.txt       # Librerías necesarias para correr el proyecto
-└── README.md              # Documentación del repositorio
+---
+
+## 📦 Instalación y Configuración Local
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone [https://github.com/tu-usuario/noc-syslog-inteligente.git](https://github.com/tu-usuario/noc-syslog-inteligente.git)
+   cd noc-syslog-inteligente
