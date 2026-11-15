@@ -50,7 +50,6 @@ En una red empresarial los equipos generan mensajes Syslog todo el tiempo y la m
 
 ## 🏗️ Arquitectura y Flujo
 
-```text
 ┌────────────────────────────┐      ┌─────────────────────────────────────────┐
 │   Simulador / Dashboard    │ ───▶ │          Backend (FastAPI)              │
 │   (HTML5 + Bootstrap 5)    │      │                                         │
@@ -245,13 +244,9 @@ docs/Politicas_Syslog.md: Clasificación de severidades RFC 5424, escalamiento y
 
 docs/Manual_Operacion.md: Guía detallada de instalación, operación diaria y validación funcional.
 
-Proyecto académico desarrollado para la asignatura Administración y Gestión de Redes — Fundación Universitaria Compensar (2026).
 
 
-### Para actualizarlo en tu GitHub:
-1. Pega este contenido en tu `README.md` y guarda (`Ctrl + S`).
-2. En tu terminal ejecuta:
-   ```bash
-   git add README.md
-   git commit -m "Docs: Mejorar formato y estructura completa del README.md v1.0.0"
-   git push origin main
+
+
+
+
